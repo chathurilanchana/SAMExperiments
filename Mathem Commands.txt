@@ -48,7 +48,7 @@ Allow eventbridge to post an event to a given api enspoint. Api desitnation will
 evb api-destination -t template.yaml -u https://api.slack.com/specs/openapi/v2/slack_web.json  (and fill in. Use APi_Key as authentication. Place api key in secret manager)
 
 You can try with curl first
-curl -d "text=Hi I am a bot that can post messages to any public channel." -d "channel=just-me" -H "Authorization: Bearer xoxb-3573749664256-3550160910595-bVNKUzWCutMYiY1c6rURzC4a" -X POST https://slack.com/api/chat.postMessage
+curl -d "text=Hi I am a bot that can post messages to any public channel." -d "channel=just-me" -H "Authorization: Bearer <key>" -X POST https://slack.com/api/chat.postMessage
 
 
 ##Replay Events###
