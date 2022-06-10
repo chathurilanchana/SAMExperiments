@@ -1,0 +1,131 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Timeout: 100
+Description: |
+  Sample SAM Template for OrderApi
+Resources:
+
+  # OrderApi:
+  #   Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  #   Properties:
+  #     Description: Order Api
+  #     CodeUri: ./src/OrderApi/
+  #     Handler: OrderApi
+  #     Runtime: dotnet6
+  #     MemorySize: 256
+  #     Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+  #       Variables:
+  #         OrderAndTransactionTable: !Ref OrderAndTransactionTable
+  #     Policies:
+  #       # Give Create/Read/Update/Delete Permissions to the SampleTable
+  #       - DynamoDBCrudPolicy:
+  #           TableName: !Ref OrderAndTransactionTable
+  #     Events:
+  #       ProxyResource:
+  #         Type: HttpApi
+  #         Properties:
+  #           PayloadFormatVersion: "2.0"
+  #           Path: /{proxy+}
+  #           Method: ANY
+  #       RootResource:
+  #         PayloadFormatVersion: "2.0"
+  #         Type: HttpApi
+  #         Properties:
+  #           Path: /
+  #           Method: ANY
+
+  OrderAndTransactionTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Orders
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1-PK
+          AttributeType: S
+        - AttributeName: GSI1-SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1-index
+          KeySchema:
+            - AttributeName: GSI1-PK
+              KeyType: HASH
+            - AttributeName: GSI1-SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 2
+            WriteCapacityUnits: 2
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+  # MyDynamoStream:
+  #   Type: AWS::DynamoDB::Table
+  #   Properties:
+  #     AttributeDefinitions:
+  #       - AttributeName: name
+  #         AttributeType: S
+  #     KeySchema:
+  #       - AttributeName: name
+  #         KeyType: HASH
+  #     ProvisionedThroughput:
+  #       ReadCapacityUnits: 5
+  #       WriteCapacityUnits: 5
+  #     StreamSpecification:
+  #       StreamViewType: NEW_AND_OLD_IMAGES
+
+  EventProcessingLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "/aws/lambda/OrderEventProcessingFunction"
+      RetentionInDays: 1
+
+  EventProcessingFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: EventProcessingLogGroup
+    Properties:
+      FunctionName: OrderEventProcessingFunction
+      CodeUri: ./src/Stream/
+      Handler: Stream::Stream.DynamoDBStreamToEventBridgeForwarder::FunctionHandler
+      Runtime: dotnet6
+      Description: >-
+        A Lambda function that forward changes on DynamoDB table to EventBridge
+        bus.
+      MemorySize: 256
+      Timeout: 3
+      Events:
+        TableRecordChange:
+          Type: DynamoDB
+          Properties:
+            StartingPosition: LATEST
+            Stream: !GetAtt OrderAndTransactionTable.StreamArn
+      # Policies:
+      #   - Statement:
+      #       - Effect: Allow
+      #         Resource: '*'
+      #         Action:
+      #           - events:PutEvents
+      #   - Statement:
+      #       - Effect: Allow
+      #         Resource: '*'
+      #         Action:
+      #           - logs:CreateLogStream
+      #           - logs:PutLogEvents
+
+
+  OrdersEventBus:
+    Type: AWS::Events::EventBus
+    Properties:
+      Name: OrdersEventBus

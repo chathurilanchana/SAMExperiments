@@ -1,0 +1,19 @@
+{
+    "id": "01234567-0123-0123-0123-012345678901",
+    "detail-type": "created",
+    "source": "order",
+    "account": "519966566583",
+    "time": "2019-11-04T21:54:20Z",
+    "region": "eu-north-1",
+    "resources": ["order"],
+  "detail": {
+      "CustomerId": "1999",
+      "Amount": 300,
+      "CorelationId": "9cabb81f-42de-417d-8aa7-ce16bf026590",
+      "Details": {
+        "MerchantRef": "NELL-1988",
+        "Tax": 100
+      }
+    }
+  }
+  

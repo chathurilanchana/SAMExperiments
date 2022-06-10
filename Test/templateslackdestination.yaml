@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+Description: |
+  Test
+  Sample SAM Template for Test
+Resources:
+  OrderEventBus:
+    Type: 'AWS::Events::EventBus'
+    Properties:
+      Name: orders-event-bus
+  StockBuyerFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: ./functions/OrderProcessor
+      Handler: 'OrderProcessor::OrderProcessor.Function::FunctionHandler'
+      Runtime: dotnet6
+      Timeout: 3
+  OrderCreatedByNellyRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      EventBusName: !Ref OrderEventBus
+      EventPattern:
+        source:
+          - order
+        detail-type:
+          - Created
+        detail:
+          Details:
+            MerchantRef:
+              - prefix: NELL-
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt SlackWebAPIDestination.Arn
+          RoleArn: !GetAtt SlackWebAPIInvokeRole.Arn
+          Id: SlackWebAPITarget
+          InputTransformer:
+            InputTemplate: '{"text":"<text>","channel":"#general"}'
+            InputPathsMap:
+              text: $.detail.Details.MerchantRef
+        - Arn: !GetAtt SlackWebAPIDestination.Arn
+          RoleArn: !GetAtt SlackWebAPIInvokeRole.Arn
+          Id: SlackWebAPITarget
+  SlackWebAPIConnection:
+    Type: 'AWS::Events::Connection'
+    Properties:
+      AuthorizationType: API_KEY
+      AuthParameters:
+        ApiKeyAuthParameters:
+          ApiKeyName: Authorization
+          ApiKeyValue: >-
+            {{resolve:secretsmanager:SlackWebAPI-auth/Credentials:SecretString:ApiKey}}
+  SlackWebAPIDestination:
+    Type: 'AWS::Events::ApiDestination'
+    Properties:
+      ConnectionArn: !GetAtt SlackWebAPIConnection.Arn
+      InvocationEndpoint: 'https://slack.com/api/admin.apps.approve'
+      HttpMethod: POST
+      InvocationRateLimitPerSecond: 10
+  SlackWebAPIInvokeRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - events.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: AllowAPIdestinationAccess
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 'events:InvokeApiDestination'
+                Resource: !GetAtt SlackWebAPIDestination.Arn

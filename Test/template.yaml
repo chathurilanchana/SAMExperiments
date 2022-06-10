@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+Description: |
+  Test
+  Sample SAM Template for Test
+Resources:
+  OrderEventBus:
+    Type: 'AWS::Events::EventBus'
+    Properties:
+      Name: orders-event-bus
+
+  StockBuyerFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      CodeUri: ./functions/OrderProcessor
+      Handler: 'OrderProcessor::OrderProcessor.Function::FunctionHandler'
+      Runtime: dotnet6
+      Timeout: 3
+
+  OrderCreatedByNellyRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      EventBusName: !Ref OrderEventBus
+      EventPattern:
+        source:
+          - order
+        detail-type:
+          - created
+        detail:
+          Details:
+            MerchantRef:
+              - prefix: NELL-
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt StockBuyerFunction.Arn
+          Id: TriggerRule
+          InputTransformer:
+            InputPathsMap:
+              Details: "$.detail.Details"
+              Source: "$.source"
+            InputTemplate: "{\"Details\":<Details>, \"Source\":<Source>}"
+
+
+
+  OrderCreatedByNellyRulePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref StockBuyerFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt OrderCreatedByNellyRule.Arn

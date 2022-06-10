@@ -1,0 +1,75 @@
+Necessary sam commands
+
+sam pattern init  (this will generate a sample application)
+
+
+sam pattern import (select eventbridge lambda consumer template). This will have a sample event pattern for you to modify as well
+
+sam-patterns policy  (Build iam policy for sam resources. Eg: Lambda function)
+
+
+To deploy lambda
+dotnet lambda deploy-serverless Test --region eu-north-1 --profile chathuri --template template.yaml
+
+bucket chathuri-stockmarket-aaa-test
+
+
+For pattern generation
+evb pattern (and select the pattern you want)
+
+for input transformation
+evb input -f yaml
+
+
+For code generation
+evb cb -p chathuri -t template.yaml -o functions/OrderProcessor/OrderEvent.cs  (you can skip -t to generate binding of whole event, eg: no input transforms)
+evb cb -p chathuri -o functions/OrderProcessor/OrderEvent.cs 
+
+evb cb -p chathuri
+
+set AWS_REGION=eu-north-1
+
+
+
+to browse  (See who are the consumers of given event source and detail type on a given event bus, what rules and input transformations they use, etc)
+evb browse (and select the rest from the command line)
+
+
+to test an event and see which rules get triggered
+evb test-event -e event.json --eventbus orders-event-bus
+
+
+To get a diagram of events on a certain event bus
+evb diagram --eventbus orders-event-bus
+
+
+###event bridge api destinations###
+Allow eventbridge to post an event to a given api enspoint. Api desitnation will be the target.
+evb api-destination -t template.yaml -u https://api.slack.com/specs/openapi/v2/slack_web.json  (and fill in. Use APi_Key as authentication. Place api key in secret manager)
+
+You can try with curl first
+curl -d "text=Hi I am a bot that can post messages to any public channel." -d "channel=just-me" -H "Authorization: Bearer xoxb-3573749664256-3550160910595-bVNKUzWCutMYiY1c6rURzC4a" -X POST https://slack.com/api/chat.postMessage
+
+
+##Replay Events###
+ evb replay -b orders-event-bus --replay-name order-replay  (as you go on, select the rule to replay against). Note you should have archieve created and some events in archieve to be
+ able to replay against. Also remember to select from time before you send the event to event bus and to time after you send event to bus
+
+##Debug Events##
+You will use evb local commands for this. This will output evb events to the developers console for troubleshooting.
+
+Test a rule before deploying the stack.
+evb local --rule  (and select rule logical name in your template)
+
+get events for all the rules in a given stack
+evb local --stack-name <stack-name>
+
+You dont know stack name. You only know the arn. You want to get all events matching that ARN.
+evb local --arn <rule-arn>
+
+
+Replay archieved events
+evb local --replay
+
+For mor advanced debuging you can use sam-local with evb local.
+evb local --sam-local
