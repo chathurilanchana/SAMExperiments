@@ -40,7 +40,7 @@ if (env.Equals("Local"))
     });
     builder.Services.AddSingleton<IAmazonDynamoDB>(sp =>
     {
-        var credentials = new BasicAWSCredentials("AKIAXSEDMFC3QKYM4OU2", "Q8CdAlcG+39CEGYDgyVnn+791OYHojxhv8XHoxUz");
+        var credentials = new BasicAWSCredentials("<AccessKey>", "<SecretKey>");
         return new AmazonDynamoDBClient(credentials);
     });
 }
