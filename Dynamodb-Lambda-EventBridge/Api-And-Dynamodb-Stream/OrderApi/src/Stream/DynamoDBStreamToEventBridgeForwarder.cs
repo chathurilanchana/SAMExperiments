@@ -99,17 +99,15 @@ public class DynamoDBStreamToEventBridgeForwarder
             Detail = JsonSerializer.Serialize(
                 new ItemAdded
                 {
-                    CustomerId = attributeMap["CustomerId"].S,
                     OrderId = attributeMap["Id"].S,
                     CorelationId = Guid.NewGuid().ToString(),
-                    OrderLines = new List<ItemAddedItem>
-                    {
-                        new ItemAddedItem
+                    OrderLine = 
+                        new OrderLine
                         {
                             Amount = Convert.ToDouble(attributeMap["Amount"].N),
                             Id = attributeMap["Id"].S,
                             Type = attributeMap["Type"].S,
-                        }                    }
+                        }                    
                 })
         };
     }

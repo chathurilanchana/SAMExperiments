@@ -1,9 +1,9 @@
 Necessary sam commands
 
-sam pattern init  (this will generate a sample application)
+sam-patterns init  (this will generate a sample application)
 
 
-sam pattern import (select eventbridge lambda consumer template). This will have a sample event pattern for you to modify as well
+sam-patterns import (select eventbridge lambda consumer template). This will have a sample event pattern for you to modify as well
 
 sam-patterns policy  (Build iam policy for sam resources. Eg: Lambda function)
 
@@ -16,6 +16,20 @@ bucket chathuri-stockmarket-aaa-test
 
 For pattern generation
 evb pattern (and select the pattern you want)
+
+With the above command you will be able to generate something as below
+{
+	"source": ["order"],
+	"detail": {
+		"Amount": [
+		{"numeric": [">", 200]},
+		{ "anything-but": [ 500 ] }],
+		"Details": {
+		   "MerchantRef" : [{"prefix": "NELL-"},{"prefix": "BELL-"}],
+           "Tax" : [{"numeric": ["=",100]}]
+		 }
+	}
+}
 
 for input transformation
 evb input -f yaml

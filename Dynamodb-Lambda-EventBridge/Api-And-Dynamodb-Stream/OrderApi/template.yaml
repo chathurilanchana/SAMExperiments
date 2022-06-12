@@ -111,18 +111,19 @@ Resources:
           Properties:
             StartingPosition: LATEST
             Stream: !GetAtt OrderAndTransactionTable.StreamArn
-      # Policies:
-      #   - Statement:
-      #       - Effect: Allow
-      #         Resource: '*'
-      #         Action:
-      #           - events:PutEvents
-      #   - Statement:
-      #       - Effect: Allow
-      #         Resource: '*'
-      #         Action:
-      #           - logs:CreateLogStream
-      #           - logs:PutLogEvents
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Resource: '*'
+              Action:
+                - events:PutEvents
+        - Statement:
+            - Effect: Allow
+              Resource: '*'
+              Action:
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+                - logs:CreateLogGroup
 
 
   OrdersEventBus:

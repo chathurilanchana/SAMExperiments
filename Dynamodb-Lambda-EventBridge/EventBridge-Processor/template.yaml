@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: dotnet6
+Description: |
+  Sample SAM Template for Processor
+Resources:
+  ConsumerFunction:
+    Type: 'AWS::Serverless::Function'
+    Description: Invoked by EventBridge rule
+    Properties:
+      CodeUri: ./src
+      Handler: 'Processor::Processor.Processor::FunctionHandler'
+      Runtime: dotnet6
+      MemorySize: 256
+      Environment:
+        Variables:
+          PARAM1: VALUE
+  ProcessorEventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      EventBusName: OrdersEventBus
+      EventPattern:
+        source:
+          - order
+        detail-type:
+          - created
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt ConsumerFunction.Arn
+          Id: ProcessorEventRule
+          InputTransformer:
+            InputPathsMap:
+              OrderId: "$.detail.OrderId"
+              CustomerId: "$.detail.CustomerId"
+                # Type: "$.detail.OrderLine.Type"
+                # Id: "$.detail.OrderLine.Id"
+            InputTemplate: "{\"OrderId\":<OrderId>,\"CustomerId\":<CustomerId>}"
+            #InputTemplate: "{\"OrderId\":<OrderId>,\"Amount\":<Amount>,\"Type\":<Type>,\"Id\":<Id>}"
+  ProcessorEventRulePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref ConsumerFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ProcessorEventRule.Arn
