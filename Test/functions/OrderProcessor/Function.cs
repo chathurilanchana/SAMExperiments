@@ -2,7 +2,7 @@ using Amazon.Lambda.Core;
 using System;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
-[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.CamelCaseLambdaJsonSerializer))]
+[assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
 namespace OrderProcessor
 {
@@ -42,13 +42,13 @@ namespace OrderProcessor
 
 
             //Example processing event with input transform
-            Console.WriteLine(orderEvent.Details.Tax.HasValue ? orderEvent.Details.Tax : "notset");
+            //Console.WriteLine(orderEvent.Details.Tax.HasValue ? orderEvent.Details.Tax : "notset");
             Console.WriteLine($"source {orderEvent.Source}");
             return new TransactionResult
             {
                 Id = rand.Next().ToString(),
                 Type = "Buy",
-                Price = orderEvent.Details.Tax.ToString() ?? "notset",
+                //Price = orderEvent.Details.Tax.ToString() ?? "notset",
                 Qty = (rand.Next() % 10 + 1).ToString(),
                 Timestamp = DateTime.Now.ToString("yyyyMMddHHmmssffff")
             };
